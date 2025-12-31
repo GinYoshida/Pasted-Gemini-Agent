@@ -4,31 +4,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { KanjiButton } from "@/components/KanjiButton";
 import { useCreateLog } from "@/hooks/use-logs";
+import { useActiveQuizzes } from "@/hooks/use-quizzes";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ArrowLeft } from "lucide-react";
+import type { QuizQuestion } from "@shared/schema";
 
 // Asset paths
 const IMG_SPINO = "/assets/generated_images/green-spinosaurus-boy.png";
 
-type Question = {
-  id: number;
-  imageKey: string;
-  kanji: string;
-  options: string[];
-  translations: {
-    ja: { question: string; hint: string };
-    en: { question: string; hint: string };
-  };
-};
-
-interface QuizData {
-  quizzes: Question[];
-  imageMap: { [key: string]: string };
-}
-
 export default function Game() {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [imageMap, setImageMap] = useState<{ [key: string]: string }>({});
+  const { data: dbQuestions, isLoading: dbLoading } = useActiveQuizzes();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [gameState, setGameState] = useState<"loading" | "playing" | "feedback" | "complete">("loading");
@@ -37,20 +22,15 @@ export default function Game() {
   const createLog = useCreateLog();
   const { language } = useLanguage();
 
-  // Load quizzes from JSON
+  const questions: QuizQuestion[] = dbQuestions || [];
+
   useEffect(() => {
-    fetch("/data/quizzes.json")
-      .then((res) => res.json())
-      .then((data: QuizData) => {
-        setQuestions(data.quizzes);
-        setImageMap(data.imageMap);
-        setGameState("playing");
-      })
-      .catch((err) => {
-        console.error("Failed to load quizzes:", err);
-        setGameState("playing");
-      });
-  }, []);
+    if (!dbLoading && questions.length > 0) {
+      setGameState("playing");
+    } else if (!dbLoading && questions.length === 0) {
+      setGameState("playing");
+    }
+  }, [dbLoading, questions.length]);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -172,14 +152,29 @@ export default function Game() {
   }
 
   if (!currentQuestion) {
-    return null;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6">
+        <div className="text-center">
+          <p className="text-xl text-muted-foreground mb-4">
+            {language === "ja"
+              ? "問題がまだありません。管理画面から問題を追加してください。"
+              : "No questions yet. Please add questions from the admin page."}
+          </p>
+          <Link
+            href="/"
+            className="text-primary underline"
+            data-testid="link-back-to-home"
+          >
+            {language === "ja" ? "ホームに戻る" : "Back to Home"}
+          </Link>
+        </div>
+      </div>
+    );
   }
 
-  const currentImage = imageMap[currentQuestion.imageKey];
+  const currentImage = currentQuestion.imagePath;
   const questionText =
-    language === "ja"
-      ? currentQuestion.translations.ja.question
-      : currentQuestion.translations.en.question;
+    language === "ja" ? currentQuestion.questionJa : currentQuestion.questionEn;
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 md:p-8">
@@ -233,10 +228,8 @@ export default function Game() {
                 transition={{ duration: 0.5 }}
                 src={currentImage}
                 alt="Question Image"
-                className={`object-contain rounded-md ${
-                  currentQuestion.imageKey === "tree" ? "w-80 h-auto" : "w-full h-full object-cover"
-                }`}
-                data-testid={`img-kanji-${currentQuestion.imageKey}`}
+                className="w-80 h-auto object-contain rounded-md"
+                data-testid={`img-kanji-${currentQuestion.kanji}`}
               />
             )}
           </AnimatePresence>

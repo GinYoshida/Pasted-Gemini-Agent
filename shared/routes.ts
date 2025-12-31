@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { insertLearningLogSchema, learningLogs } from './schema';
+import { insertLearningLogSchema, learningLogs, insertQuizQuestionSchema, updateQuizQuestionSchema, quizQuestions } from './schema';
 
 export const api = {
   logs: {
@@ -17,6 +17,41 @@ export const api = {
       responses: {
         201: z.custom<typeof learningLogs.$inferSelect>(),
         400: z.object({ message: z.string() }),
+      },
+    },
+  },
+  quizzes: {
+    list: {
+      method: 'GET' as const,
+      path: '/api/quizzes',
+      responses: {
+        200: z.array(z.custom<typeof quizQuestions.$inferSelect>()),
+      },
+    },
+    create: {
+      method: 'POST' as const,
+      path: '/api/quizzes',
+      input: insertQuizQuestionSchema,
+      responses: {
+        201: z.custom<typeof quizQuestions.$inferSelect>(),
+        400: z.object({ message: z.string() }),
+      },
+    },
+    update: {
+      method: 'PATCH' as const,
+      path: '/api/quizzes/:id',
+      input: updateQuizQuestionSchema,
+      responses: {
+        200: z.custom<typeof quizQuestions.$inferSelect>(),
+        404: z.object({ message: z.string() }),
+      },
+    },
+    delete: {
+      method: 'DELETE' as const,
+      path: '/api/quizzes/:id',
+      responses: {
+        200: z.object({ success: z.boolean() }),
+        404: z.object({ message: z.string() }),
       },
     },
   },

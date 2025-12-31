@@ -2,6 +2,7 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
+import { insertQuizQuestionSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(
@@ -26,6 +27,85 @@ export async function registerRoutes(
       }
       throw err;
     }
+  });
+
+  app.get(api.quizzes.list.path, async (req, res) => {
+    const quizzes = await storage.getQuizzes();
+    res.json(quizzes);
+  });
+
+  app.get("/api/quizzes/active", async (req, res) => {
+    const quizzes = await storage.getActiveQuizzes();
+    res.json(quizzes);
+  });
+
+  app.post(api.quizzes.create.path, async (req, res) => {
+    try {
+      const input = api.quizzes.create.input.parse(req.body);
+      const quiz = await storage.createQuiz(input);
+      res.status(201).json(quiz);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+        });
+      }
+      throw err;
+    }
+  });
+
+  app.patch("/api/quizzes/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid quiz ID" });
+      }
+      
+      const existingQuiz = await storage.getQuizById(id);
+      if (!existingQuiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      
+      const input = api.quizzes.update.input.parse(req.body);
+      
+      const mergedQuiz = {
+        kanji: input.kanji ?? existingQuiz.kanji,
+        options: input.options ?? existingQuiz.options,
+        imagePath: input.imagePath ?? existingQuiz.imagePath,
+        questionJa: input.questionJa ?? existingQuiz.questionJa,
+        questionEn: input.questionEn ?? existingQuiz.questionEn,
+        hintJa: input.hintJa !== undefined ? input.hintJa : existingQuiz.hintJa,
+        hintEn: input.hintEn !== undefined ? input.hintEn : existingQuiz.hintEn,
+        isActive: input.isActive !== undefined ? input.isActive : existingQuiz.isActive,
+      };
+      
+      insertQuizQuestionSchema.parse(mergedQuiz);
+      
+      const quiz = await storage.updateQuiz(id, input);
+      if (!quiz) {
+        return res.status(404).json({ message: "Quiz not found" });
+      }
+      res.json(quiz);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({
+          message: err.errors[0].message,
+        });
+      }
+      throw err;
+    }
+  });
+
+  app.delete("/api/quizzes/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) {
+      return res.status(400).json({ message: "Invalid quiz ID" });
+    }
+    const success = await storage.deleteQuiz(id);
+    if (!success) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+    res.json({ success: true });
   });
 
   return httpServer;

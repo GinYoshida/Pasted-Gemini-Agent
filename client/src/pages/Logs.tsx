@@ -1,20 +1,33 @@
 import { Link } from "wouter";
 import { useLogs } from "@/hooks/use-logs";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { format } from "date-fns";
-import { ArrowLeft, Trophy, Calendar, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Trophy, Calendar, CheckCircle2, Settings } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 export default function Logs() {
   const { data: logs, isLoading, error } = useLogs();
+  const { language } = useLanguage();
 
   return (
     <div className="min-h-screen bg-slate-50 p-6 md:p-12">
       <div className="max-w-3xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Link href="/" className="p-2 rounded-full hover:bg-white hover:shadow-sm transition-all text-slate-500">
-            <ArrowLeft className="w-6 h-6" />
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <Link href="/" className="p-2 rounded-full hover:bg-white hover:shadow-sm transition-all text-slate-500" data-testid="link-back-home">
+              <ArrowLeft className="w-6 h-6" />
+            </Link>
+            <h1 className="text-3xl font-display font-bold text-slate-800">
+              {language === "ja" ? "学習の記録" : "Learning Progress"}
+            </h1>
+          </div>
+          <Link href="/admin">
+            <Button variant="outline" data-testid="button-manage-quizzes">
+              <Settings className="w-4 h-4 mr-2" />
+              {language === "ja" ? "問題を管理" : "Manage Quizzes"}
+            </Button>
           </Link>
-          <h1 className="text-3xl font-display font-bold text-slate-800">Learning Progress</h1>
         </div>
 
         {isLoading ? (

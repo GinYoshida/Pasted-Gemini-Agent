@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, or, and } from "drizzle-orm";
 import {
   learningLogs,
   quizQuestions,
@@ -10,10 +10,10 @@ import {
 } from "@shared/schema";
 
 export interface IStorage {
-  getLogs(): Promise<LearningLog[]>;
+  getLogsByUser(userId: string): Promise<LearningLog[]>;
   createLog(log: InsertLearningLog): Promise<LearningLog>;
-  getQuizzes(): Promise<QuizQuestion[]>;
-  getActiveQuizzes(): Promise<QuizQuestion[]>;
+  getQuizzesByUser(userId: string, isOwner: boolean): Promise<QuizQuestion[]>;
+  getActiveQuizzesByUser(userId: string): Promise<QuizQuestion[]>;
   getQuizById(id: number): Promise<QuizQuestion | null>;
   createQuiz(quiz: InsertQuizQuestion): Promise<QuizQuestion>;
   updateQuiz(id: number, quiz: Partial<InsertQuizQuestion>): Promise<QuizQuestion | null>;
@@ -21,8 +21,10 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  async getLogs(): Promise<LearningLog[]> {
-    return await db.select().from(learningLogs).orderBy(learningLogs.completedAt);
+  async getLogsByUser(userId: string): Promise<LearningLog[]> {
+    return await db.select().from(learningLogs)
+      .where(eq(learningLogs.userId, userId))
+      .orderBy(learningLogs.completedAt);
   }
 
   async createLog(insertLog: InsertLearningLog): Promise<LearningLog> {
@@ -30,12 +32,28 @@ export class DatabaseStorage implements IStorage {
     return log;
   }
 
-  async getQuizzes(): Promise<QuizQuestion[]> {
-    return await db.select().from(quizQuestions);
+  async getQuizzesByUser(userId: string, isOwner: boolean): Promise<QuizQuestion[]> {
+    if (isOwner) {
+      return await db.select().from(quizQuestions);
+    }
+    return await db.select().from(quizQuestions).where(
+      or(
+        eq(quizQuestions.isGlobal, true),
+        eq(quizQuestions.ownerUserId, userId)
+      )
+    );
   }
 
-  async getActiveQuizzes(): Promise<QuizQuestion[]> {
-    return await db.select().from(quizQuestions).where(eq(quizQuestions.isActive, true));
+  async getActiveQuizzesByUser(userId: string): Promise<QuizQuestion[]> {
+    return await db.select().from(quizQuestions).where(
+      and(
+        eq(quizQuestions.isActive, true),
+        or(
+          eq(quizQuestions.isGlobal, true),
+          eq(quizQuestions.ownerUserId, userId)
+        )
+      )
+    );
   }
 
   async getQuizById(id: number): Promise<QuizQuestion | null> {

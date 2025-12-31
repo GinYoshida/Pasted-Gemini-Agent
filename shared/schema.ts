@@ -1,9 +1,12 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export * from "./models/auth";
+
 export const learningLogs = pgTable("learning_logs", {
   id: serial("id").primaryKey(),
+  userId: varchar("user_id"),
   score: integer("score").notNull(),
   totalQuestions: integer("total_questions").notNull(),
   completedAt: timestamp("completed_at").defaultNow(),
@@ -16,6 +19,8 @@ export type InsertLearningLog = z.infer<typeof insertLearningLogSchema>;
 
 export const quizQuestions = pgTable("quiz_questions", {
   id: serial("id").primaryKey(),
+  ownerUserId: varchar("owner_user_id"),
+  isGlobal: boolean("is_global").default(false),
   kanji: text("kanji").notNull(),
   options: text("options").array().notNull(),
   imagePath: text("image_path").notNull(),

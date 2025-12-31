@@ -7,6 +7,9 @@ import { z } from "zod";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+
+const OWNER_EMAIL = process.env.OWNER_EMAIL || "";
 
 const uploadDir = path.join(process.cwd(), "client", "public", "images");
 if (!fs.existsSync(uploadDir)) {
@@ -37,19 +40,34 @@ const upload = multer({
   },
 });
 
+function getUserFromRequest(req: any): { userId: string; email: string | null; isOwner: boolean } | null {
+  if (!req.user?.claims?.sub) return null;
+  const userId = req.user.claims.sub;
+  const email = req.user.claims.email || null;
+  const isOwner = !!OWNER_EMAIL && email === OWNER_EMAIL;
+  return { userId, email, isOwner };
+}
+
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
-  app.get(api.logs.list.path, async (req, res) => {
-    const logs = await storage.getLogs();
+  await setupAuth(app);
+  registerAuthRoutes(app);
+
+  app.get(api.logs.list.path, isAuthenticated, async (req, res) => {
+    const user = getUserFromRequest(req);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const logs = await storage.getLogsByUser(user.userId);
     res.json(logs);
   });
 
-  app.post(api.logs.create.path, async (req, res) => {
+  app.post(api.logs.create.path, isAuthenticated, async (req, res) => {
     try {
+      const user = getUserFromRequest(req);
+      if (!user) return res.status(401).json({ message: "Unauthorized" });
       const input = api.logs.create.input.parse(req.body);
-      const log = await storage.createLog(input);
+      const log = await storage.createLog({ ...input, userId: user.userId });
       res.status(201).json(log);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -61,20 +79,30 @@ export async function registerRoutes(
     }
   });
 
-  app.get(api.quizzes.list.path, async (req, res) => {
-    const quizzes = await storage.getQuizzes();
+  app.get(api.quizzes.list.path, isAuthenticated, async (req, res) => {
+    const user = getUserFromRequest(req);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const quizzes = await storage.getQuizzesByUser(user.userId, user.isOwner);
     res.json(quizzes);
   });
 
-  app.get("/api/quizzes/active", async (req, res) => {
-    const quizzes = await storage.getActiveQuizzes();
+  app.get("/api/quizzes/active", isAuthenticated, async (req, res) => {
+    const user = getUserFromRequest(req);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    const quizzes = await storage.getActiveQuizzesByUser(user.userId);
     res.json(quizzes);
   });
 
-  app.post(api.quizzes.create.path, async (req, res) => {
+  app.post(api.quizzes.create.path, isAuthenticated, async (req, res) => {
     try {
+      const user = getUserFromRequest(req);
+      if (!user) return res.status(401).json({ message: "Unauthorized" });
       const input = api.quizzes.create.input.parse(req.body);
-      const quiz = await storage.createQuiz(input);
+      const quiz = await storage.createQuiz({
+        ...input,
+        ownerUserId: user.userId,
+        isGlobal: user.isOwner ? (input.isGlobal ?? true) : false,
+      });
       res.status(201).json(quiz);
     } catch (err) {
       if (err instanceof z.ZodError) {
@@ -86,8 +114,11 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/quizzes/:id", async (req, res) => {
+  app.patch("/api/quizzes/:id", isAuthenticated, async (req, res) => {
     try {
+      const user = getUserFromRequest(req);
+      if (!user) return res.status(401).json({ message: "Unauthorized" });
+
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
         return res.status(400).json({ message: "Invalid quiz ID" });
@@ -96,6 +127,10 @@ export async function registerRoutes(
       const existingQuiz = await storage.getQuizById(id);
       if (!existingQuiz) {
         return res.status(404).json({ message: "Quiz not found" });
+      }
+
+      if (!user.isOwner && existingQuiz.ownerUserId !== user.userId) {
+        return res.status(403).json({ message: "Forbidden" });
       }
       
       const input = api.quizzes.update.input.parse(req.body);
@@ -128,11 +163,24 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/quizzes/:id", async (req, res) => {
+  app.delete("/api/quizzes/:id", isAuthenticated, async (req, res) => {
+    const user = getUserFromRequest(req);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+
     const id = parseInt(req.params.id);
     if (isNaN(id)) {
       return res.status(400).json({ message: "Invalid quiz ID" });
     }
+
+    const existingQuiz = await storage.getQuizById(id);
+    if (!existingQuiz) {
+      return res.status(404).json({ message: "Quiz not found" });
+    }
+
+    if (!user.isOwner && existingQuiz.ownerUserId !== user.userId) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
     const success = await storage.deleteQuiz(id);
     if (!success) {
       return res.status(404).json({ message: "Quiz not found" });
@@ -140,11 +188,7 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
-  app.post("/api/upload", (req, res, next) => {
-    const passcode = req.headers["x-passcode"];
-    if (passcode !== "1234") {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+  app.post("/api/upload", isAuthenticated, (req, res, next) => {
     next();
   }, upload.single("image"), (req, res) => {
     if (!req.file) {
@@ -152,6 +196,12 @@ export async function registerRoutes(
     }
     const imagePath = "/images/" + req.file.filename;
     res.json({ imagePath });
+  });
+
+  app.get("/api/auth/me", isAuthenticated, (req, res) => {
+    const user = getUserFromRequest(req);
+    if (!user) return res.status(401).json({ message: "Unauthorized" });
+    res.json({ userId: user.userId, email: user.email, isOwner: user.isOwner });
   });
 
   return httpServer;

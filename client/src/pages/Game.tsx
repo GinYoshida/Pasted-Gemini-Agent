@@ -24,7 +24,7 @@ export default function Game() {
   const createLog = useCreateLog();
   const { language } = useLanguage();
   const { speak, cancel, isSpeaking, isSupported } = useTextToSpeech({ language });
-  const { playCorrect } = useSound();
+  const { playCorrect, playIncorrect } = useSound();
 
   const questions: QuizQuestion[] = dbQuestions || [];
 
@@ -76,20 +76,25 @@ export default function Game() {
       setFeedback("correct");
       playCorrect();
       fireConfetti();
+
+      setTimeout(() => {
+        setFeedback(null);
+        if (currentQuestionIndex < questions.length - 1) {
+          setCurrentQuestionIndex((prev) => prev + 1);
+          setGameState("playing");
+        } else {
+          setGameState("complete");
+        }
+      }, 2000);
     } else {
       setFeedback("incorrect");
-    }
+      playIncorrect();
 
-    // Auto advance after short delay
-    setTimeout(() => {
-      setFeedback(null);
-      if (currentQuestionIndex < questions.length - 1) {
-        setCurrentQuestionIndex((prev) => prev + 1);
+      setTimeout(() => {
+        setFeedback(null);
         setGameState("playing");
-      } else {
-        setGameState("complete");
-      }
-    }, 2000);
+      }, 1500);
+    }
   };
 
   const handleFinish = async () => {

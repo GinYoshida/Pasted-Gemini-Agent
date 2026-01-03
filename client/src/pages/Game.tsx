@@ -6,7 +6,8 @@ import { KanjiButton } from "@/components/KanjiButton";
 import { useCreateLog } from "@/hooks/use-logs";
 import { useActiveQuizzes } from "@/hooks/use-quizzes";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ArrowLeft } from "lucide-react";
+import { useTextToSpeech } from "@/hooks/use-text-to-speech";
+import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
 import type { QuizQuestion } from "@shared/schema";
 
 // Asset paths
@@ -21,6 +22,7 @@ export default function Game() {
   const [, setLocation] = useLocation();
   const createLog = useCreateLog();
   const { language } = useLanguage();
+  const { speak, cancel, isSpeaking, isSupported } = useTextToSpeech({ language });
 
   const questions: QuizQuestion[] = dbQuestions || [];
 
@@ -31,6 +33,10 @@ export default function Game() {
       setGameState("playing");
     }
   }, [dbLoading, questions.length]);
+
+  useEffect(() => {
+    cancel();
+  }, [currentQuestionIndex, cancel]);
 
   const currentQuestion = questions[currentQuestionIndex];
 
@@ -211,9 +217,27 @@ export default function Game() {
 
       {/* Main Game Area */}
       <div className="flex-1 w-full max-w-4xl flex flex-col items-center gap-8">
-        {/* Question Text */}
-        <div className="text-center text-xl md:text-2xl font-display font-bold text-primary mb-4">
-          {questionText}
+        {/* Question Text with Read Aloud Button */}
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="text-center text-xl md:text-2xl font-display font-bold text-primary">
+            {questionText}
+          </div>
+          {isSupported && (
+            <button
+              onClick={() => isSpeaking ? cancel() : speak(questionText)}
+              className={`
+                p-3 rounded-full transition-all
+                ${isSpeaking 
+                  ? "bg-primary text-white shadow-lg" 
+                  : "bg-white text-primary shadow-md hover:shadow-lg hover:bg-primary/10"
+                }
+              `}
+              aria-label={isSpeaking ? "Stop reading" : "Read aloud"}
+              data-testid="button-read-aloud"
+            >
+              {isSpeaking ? <VolumeX className="w-6 h-6" /> : <Volume2 className="w-6 h-6" />}
+            </button>
+          )}
         </div>
 
         {/* Image Card */}

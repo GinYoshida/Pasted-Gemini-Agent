@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import { PasscodeEntry } from "@/components/PasscodeEntry";
 import { Button } from "@/components/ui/button";
-import { Play, BookOpen, Globe } from "lucide-react";
+import { Play, BookOpen, LogIn } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/hooks/use-auth";
 
-// Placeholder assets - normally would be imports
 const SPINOSAURUS_IMG = "/assets/generated_images/green-spinosaurus-boy.png";
 
 export default function Landing() {
@@ -14,6 +14,7 @@ export default function Landing() {
   const [passcodeMode, setPasscodeMode] = useState<"game" | "parents" | null>(null);
   const [, setLocation] = useLocation();
   const { language, setLanguage } = useLanguage();
+  const { user, isLoading, isAuthenticated } = useAuth();
 
   const handleModeSelect = (mode: "game" | "parents") => {
     setPasscodeMode(mode);
@@ -21,11 +22,19 @@ export default function Landing() {
   };
 
   const handlePasscodeSuccess = () => {
+    if (!isAuthenticated) {
+      window.location.href = "/api/login";
+      return;
+    }
     if (passcodeMode === "game") {
       setLocation("/game");
     } else {
       setLocation("/logs");
     }
+  };
+
+  const handleLogin = () => {
+    window.location.href = "/api/login";
   };
 
   return (
@@ -55,6 +64,22 @@ export default function Landing() {
           English
         </button>
       </div>
+
+      {/* User status indicator */}
+      {isAuthenticated && user && (
+        <div className="absolute top-6 left-6 flex items-center gap-2 bg-white px-3 py-2 rounded-lg shadow-sm z-20">
+          <span className="text-sm text-muted-foreground">
+            {user.firstName || user.email || "User"}
+          </span>
+          <button
+            onClick={() => window.location.href = "/api/logout"}
+            className="text-xs text-red-500 hover:text-red-700 underline"
+            data-testid="button-logout"
+          >
+            {language === "ja" ? "ログアウト" : "Logout"}
+          </button>
+        </div>
+      )}
 
       {/* Decorative Blobs */}
       <div className="absolute top-10 left-10 w-32 h-32 bg-secondary/30 rounded-full blur-3xl" />
@@ -96,49 +121,79 @@ export default function Landing() {
               exit={{ opacity: 0, scale: 0.9 }}
               className="flex flex-col gap-4 w-full max-w-sm"
             >
-              <button
-                onClick={() => handleModeSelect("game")}
-                className="
-                  group relative w-full py-6 px-8 rounded-3xl
-                  bg-gradient-to-r from-primary to-emerald-400
-                  text-white font-display text-2xl font-bold tracking-wide
-                  shadow-[0_8px_0_0_#059669] hover:shadow-[0_4px_0_0_#059669] hover:translate-y-1
-                  active:shadow-none active:translate-y-2
-                  transition-all duration-150 flex items-center justify-center gap-4
-                  overflow-hidden
-                "
-                data-testid="button-start-quiz"
-              >
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-3xl" />
-                <Play className="w-8 h-8 fill-current" />
-                {language === "ja" ? "クイズをはじめる" : "Start Quiz"}
-              </button>
+              {!isAuthenticated && !isLoading && (
+                <button
+                  onClick={handleLogin}
+                  className="
+                    group relative w-full py-6 px-8 rounded-3xl
+                    bg-gradient-to-r from-primary to-emerald-400
+                    text-white font-display text-2xl font-bold tracking-wide
+                    shadow-[0_8px_0_0_#059669] hover:shadow-[0_4px_0_0_#059669] hover:translate-y-1
+                    active:shadow-none active:translate-y-2
+                    transition-all duration-150 flex items-center justify-center gap-4
+                    overflow-hidden
+                  "
+                  data-testid="button-login"
+                >
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-3xl" />
+                  <LogIn className="w-8 h-8" />
+                  {language === "ja" ? "ログインして始める" : "Login to Start"}
+                </button>
+              )}
 
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-border" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-transparent px-2 text-muted-foreground">
-                    {language === "ja" ? "大人用" : "For Grown-Ups"}
-                  </span>
-                </div>
-              </div>
+              {isAuthenticated && (
+                <>
+                  <button
+                    onClick={() => handleModeSelect("game")}
+                    className="
+                      group relative w-full py-6 px-8 rounded-3xl
+                      bg-gradient-to-r from-primary to-emerald-400
+                      text-white font-display text-2xl font-bold tracking-wide
+                      shadow-[0_8px_0_0_#059669] hover:shadow-[0_4px_0_0_#059669] hover:translate-y-1
+                      active:shadow-none active:translate-y-2
+                      transition-all duration-150 flex items-center justify-center gap-4
+                      overflow-hidden
+                    "
+                    data-testid="button-start-quiz"
+                  >
+                    <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-3xl" />
+                    <Play className="w-8 h-8 fill-current" />
+                    {language === "ja" ? "クイズをはじめる" : "Start Quiz"}
+                  </button>
 
-              <button
-                onClick={() => handleModeSelect("parents")}
-                className="
-                  w-full py-4 px-6 rounded-2xl
-                  bg-white border-2 border-border
-                  text-muted-foreground font-bold hover:text-primary hover:border-primary
-                  shadow-sm hover:shadow-md transition-all duration-200
-                  flex items-center justify-center gap-2
-                "
-                data-testid="button-view-logs"
-              >
-                <BookOpen className="w-5 h-5" />
-                {language === "ja" ? "保護者画面" : "Parent Screen"}
-              </button>
+                  <div className="relative my-4">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-transparent px-2 text-muted-foreground">
+                        {language === "ja" ? "大人用" : "For Grown-Ups"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleModeSelect("parents")}
+                    className="
+                      w-full py-4 px-6 rounded-2xl
+                      bg-white border-2 border-border
+                      text-muted-foreground font-bold hover:text-primary hover:border-primary
+                      shadow-sm hover:shadow-md transition-all duration-200
+                      flex items-center justify-center gap-2
+                    "
+                    data-testid="button-view-logs"
+                  >
+                    <BookOpen className="w-5 h-5" />
+                    {language === "ja" ? "保護者画面" : "Parent Screen"}
+                  </button>
+                </>
+              )}
+
+              {isLoading && (
+                <div className="text-center py-8">
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                </div>
+              )}
             </motion.div>
           ) : (
             <motion.div

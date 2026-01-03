@@ -6,7 +6,7 @@ import { Play, BookOpen, LogIn } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/use-auth";
 
-const SPINOSAURUS_IMG = "/assets/generated_images/green-spinosaurus-boy.png";
+const SPINOSAURUS_IMG = "/assets/generated_images/spinosaurus-painting.png";
 
 const MAX_QUESTIONS_OPTIONS = [5, 10, 15, 0] as const;
 

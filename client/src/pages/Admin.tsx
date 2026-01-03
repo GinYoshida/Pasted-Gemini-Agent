@@ -257,19 +257,6 @@ export default function Admin() {
                             : "Upload Image"}
                       </Button>
                     </div>
-                    <input
-                      type="text"
-                      value={formData.imagePath || ""}
-                      onChange={(e) => setFormData({ ...formData, imagePath: e.target.value })}
-                      className="w-full p-3 border rounded-lg"
-                      placeholder="/images/kanji-ki.png"
-                      data-testid="input-image-path"
-                    />
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {language === "ja"
-                        ? "画像をアップロードするか、パスを直接入力"
-                        : "Upload an image or enter path directly"}
-                    </p>
                     {formData.imagePath && (
                       <div className="mt-2 p-2 bg-slate-50 rounded-lg">
                         <img

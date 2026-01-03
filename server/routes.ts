@@ -1,44 +1,64 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { insertQuizQuestionSchema } from "@shared/schema";
 import { z } from "zod";
-import multer from "multer";
+import multer, { MulterError } from "multer";
 import path from "path";
 import fs from "fs";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "";
 
-const uploadDir = path.join(process.cwd(), "client", "public", "images");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+const UPLOAD_CONFIG = {
+  maxFileSizeMB: 10,
+  allowedMimeTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+  uploadDir: path.join(process.cwd(), "client", "public", "images"),
+  filePrefix: "kanji-",
+};
+
+if (!fs.existsSync(UPLOAD_CONFIG.uploadDir)) {
+  fs.mkdirSync(UPLOAD_CONFIG.uploadDir, { recursive: true });
 }
 
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, uploadDir);
+      cb(null, UPLOAD_CONFIG.uploadDir);
     },
     filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
       const ext = path.extname(file.originalname);
-      cb(null, "kanji-" + uniqueSuffix + ext);
+      cb(null, UPLOAD_CONFIG.filePrefix + uniqueSuffix + ext);
     },
   }),
   fileFilter: (req, file, cb) => {
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-    if (allowedTypes.includes(file.mimetype)) {
+    if (UPLOAD_CONFIG.allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Only image files are allowed"));
+      cb(new Error(`Only ${UPLOAD_CONFIG.allowedMimeTypes.join(", ")} files are allowed`));
     }
   },
   limits: {
-    fileSize: 5 * 1024 * 1024,
+    fileSize: UPLOAD_CONFIG.maxFileSizeMB * 1024 * 1024,
   },
 });
+
+function handleMulterError(err: Error, req: Request, res: Response, next: NextFunction) {
+  if (err instanceof MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(413).json({
+        message: `File too large. Maximum size is ${UPLOAD_CONFIG.maxFileSizeMB}MB`,
+      });
+    }
+    return res.status(400).json({ message: err.message });
+  }
+  if (err) {
+    return res.status(400).json({ message: err.message });
+  }
+  next();
+}
 
 function getUserFromRequest(req: any): { userId: string; email: string | null; isOwner: boolean } | null {
   if (!req.user?.claims?.sub) return null;
@@ -188,15 +208,25 @@ export async function registerRoutes(
     res.json({ success: true });
   });
 
-  app.post("/api/upload", isAuthenticated, (req, res, next) => {
-    next();
-  }, upload.single("image"), (req, res) => {
-    if (!req.file) {
-      return res.status(400).json({ message: "No file uploaded" });
+  app.post(
+    "/api/upload",
+    isAuthenticated,
+    (req: Request, res: Response, next: NextFunction) => {
+      upload.single("image")(req, res, (err: any) => {
+        if (err) {
+          return handleMulterError(err, req, res, next);
+        }
+        next();
+      });
+    },
+    (req: Request, res: Response) => {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+      const imagePath = "/images/" + req.file.filename;
+      res.json({ imagePath });
     }
-    const imagePath = "/images/" + req.file.filename;
-    res.json({ imagePath });
-  });
+  );
 
   app.get("/api/auth/me", isAuthenticated, (req, res) => {
     const user = getUserFromRequest(req);

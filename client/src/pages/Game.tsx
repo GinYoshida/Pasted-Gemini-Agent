@@ -7,6 +7,7 @@ import { useCreateLog } from "@/hooks/use-logs";
 import { useActiveQuizzes } from "@/hooks/use-quizzes";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTextToSpeech } from "@/hooks/use-text-to-speech";
+import { useSound } from "@/hooks/use-sound";
 import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
 import type { QuizQuestion } from "@shared/schema";
 
@@ -23,6 +24,7 @@ export default function Game() {
   const createLog = useCreateLog();
   const { language } = useLanguage();
   const { speak, cancel, isSpeaking, isSupported } = useTextToSpeech({ language });
+  const { playCorrect } = useSound();
 
   const questions: QuizQuestion[] = dbQuestions || [];
 
@@ -72,6 +74,7 @@ export default function Game() {
     if (kanji === currentQuestion.kanji) {
       setScore((s) => s + 1);
       setFeedback("correct");
+      playCorrect();
       fireConfetti();
     } else {
       setFeedback("incorrect");

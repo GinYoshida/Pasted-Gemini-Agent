@@ -13,7 +13,7 @@ import type { QuizQuestion } from "@shared/schema";
 import { HelpGuide } from "@/components/HelpGuide";
 
 // Asset paths
-const IMG_SPINO = "/assets/generated_images/green-spinosaurus-boy.png";
+const IMG_SPINO_HAPPY = "/assets/spino-happy.png";
 
 /**
  * Shuffles an array using the Fisher-Yates algorithm.
@@ -182,9 +182,9 @@ export default function Game() {
           className="bg-white p-10 rounded-[2.5rem] shadow-xl text-center max-w-md w-full border-4 border-white"
         >
           <img
-            src={IMG_SPINO}
+            src={IMG_SPINO_HAPPY}
             alt="Spinosaurus"
-            className="w-40 h-40 mx-auto mb-6 drop-shadow-lg"
+            className="w-48 h-48 mx-auto mb-6 drop-shadow-lg object-contain"
             data-testid="img-spino-complete"
           />
           <h2 className="text-4xl font-display font-bold text-primary mb-2">

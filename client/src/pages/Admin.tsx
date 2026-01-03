@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { ArrowLeft, Plus, Trash2, Save, X, Image, Upload } from "lucide-react";
 import type { QuizQuestion, InsertQuizQuestion } from "@shared/schema";
+import imageCompression from "browser-image-compression";
 
 import { ALL_KANJI, KANJI_BY_GRADE, GRADE_LABELS } from "@/data/kanji-catalog";
 
@@ -134,8 +135,25 @@ export default function Admin() {
     setUploading(true);
     setError(null);
     try {
+      let fileToUpload = file;
+
+      // Compress image if it's an image and larger than 2MB
+      if (file.type.startsWith("image/") && file.size > 2 * 1024 * 1024) {
+        const options = {
+          maxSizeMB: 2,
+          maxWidthOrHeight: 1920,
+          useWebWorker: true,
+        };
+        try {
+          fileToUpload = await imageCompression(file, options);
+        } catch (compressionError) {
+          console.error("Compression error:", compressionError);
+          // Fallback to original file if compression fails
+        }
+      }
+
       const formDataUpload = new FormData();
-      formDataUpload.append("image", file);
+      formDataUpload.append("image", fileToUpload);
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -144,7 +162,18 @@ export default function Admin() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Upload failed");
+        let errorMessage = errorData.message || "Upload failed";
+        
+        // Translate common errors
+        if (errorMessage.includes("File too large")) {
+          errorMessage = language === "ja" 
+            ? "ファイルサイズが大きすぎます。最大10MBまでです。" 
+            : "File too large. Maximum size is 10MB.";
+        } else if (errorMessage === "Upload failed") {
+          errorMessage = language === "ja" ? "アップロードに失敗しました" : "Upload failed";
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

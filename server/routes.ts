@@ -3,6 +3,7 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { insertQuizQuestionSchema } from "@shared/schema";
+import { UPLOAD_CONFIG } from "@shared/constants";
 import { z } from "zod";
 import multer, { MulterError } from "multer";
 import path from "path";
@@ -11,21 +12,16 @@ import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integra
 
 const OWNER_EMAIL = process.env.OWNER_EMAIL || "";
 
-const UPLOAD_CONFIG = {
-  maxFileSizeMB: 10,
-  allowedMimeTypes: ["image/jpeg", "image/png", "image/gif", "image/webp"],
-  uploadDir: path.join(process.cwd(), "client", "public", "images"),
-  filePrefix: "kanji-",
-};
+const UPLOAD_DIR_PATH = path.join(process.cwd(), UPLOAD_CONFIG.uploadDir);
 
-if (!fs.existsSync(UPLOAD_CONFIG.uploadDir)) {
-  fs.mkdirSync(UPLOAD_CONFIG.uploadDir, { recursive: true });
+if (!fs.existsSync(UPLOAD_DIR_PATH)) {
+  fs.mkdirSync(UPLOAD_DIR_PATH, { recursive: true });
 }
 
 const upload = multer({
   storage: multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, UPLOAD_CONFIG.uploadDir);
+      cb(null, UPLOAD_DIR_PATH);
     },
     filename: (req, file, cb) => {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

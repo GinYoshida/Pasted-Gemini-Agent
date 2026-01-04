@@ -439,6 +439,72 @@ export default function Admin() {
           )}
         </AnimatePresence>
 
+        {/* Affiliate Advertising Section */}
+        <section className="mb-12 mt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-xl font-bold text-slate-700">
+              {language === "ja" ? "おすすめの学習教材" : "Recommended Resources"}
+            </h2>
+            <span className="text-[10px] uppercase tracking-wider text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded">
+              {language === "ja" ? "PR / 広告" : "Sponsored"}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="p-4 border-dashed border-2 border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors group">
+              <a 
+                href="https://replit.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-4"
+                data-testid="link-ad-sample-1"
+              >
+                <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center border shadow-sm group-hover:shadow-md transition-shadow p-2">
+                  <div className="text-2xl">📚</div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800 group-hover:text-primary transition-colors">
+                    {language === "ja" ? "はじめての漢字ドリル" : "My First Kanji Drill"}
+                  </h3>
+                  <p className="text-sm text-slate-500 line-clamp-2">
+                    {language === "ja" 
+                      ? "このアプリと一緒に使える、書き順もしっかり学べるドリルです。" 
+                      : "A perfect workbook to use alongside this app for writing practice."}
+                  </p>
+                </div>
+              </a>
+            </Card>
+
+            <Card className="p-4 border-dashed border-2 border-slate-200 bg-slate-50/50 hover:bg-slate-50 transition-colors group">
+              <a 
+                href="https://replit.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center gap-4"
+                data-testid="link-ad-sample-2"
+              >
+                <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center border shadow-sm group-hover:shadow-md transition-shadow p-2">
+                  <div className="text-2xl">🎨</div>
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-800 group-hover:text-primary transition-colors">
+                    {language === "ja" ? "おえかき漢字カード" : "Illustrated Kanji Cards"}
+                  </h3>
+                  <p className="text-sm text-slate-500 line-clamp-2">
+                    {language === "ja" 
+                      ? "絵から漢字をイメージする力がつく、フラッシュカードセット。" 
+                      : "Flashcard set designed to help visualize kanji through art."}
+                  </p>
+                </div>
+              </a>
+            </Card>
+          </div>
+          <p className="text-[10px] text-slate-400 mt-3 text-center italic">
+            {language === "ja" 
+              ? "※上記はサンプルリンクです。実際のアフィリエイトリンクに差し替えてご利用いただけます。" 
+              : "* These are sample links. You can replace them with your actual affiliate links."}
+          </p>
+        </section>
+
         {isLoading ? (
           <div className="text-center py-12">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />

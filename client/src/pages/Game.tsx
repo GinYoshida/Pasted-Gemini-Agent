@@ -11,6 +11,7 @@ import { useSound } from "@/hooks/use-sound";
 import { ArrowLeft, Volume2, VolumeX } from "lucide-react";
 import type { QuizQuestion } from "@shared/schema";
 import { HelpGuide } from "@/components/HelpGuide";
+import { t } from "@/lib/i18n";
 
 // Asset paths
 const IMG_SPINO_HAPPY = "/assets/spino-happy.png";
@@ -167,7 +168,7 @@ export default function Game() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">{language === "ja" ? "読み込み中..." : "Loading..."}</p>
+          <p className="text-muted-foreground">{t(language, "common", "loading")}</p>
         </div>
       </div>
     );
@@ -188,7 +189,7 @@ export default function Game() {
             data-testid="img-spino-complete"
           />
           <h2 className="text-4xl font-display font-bold text-primary mb-2">
-            {language === "ja" ? "できました!" : "You Did It!"}
+            {t(language, "game", "complete")}
           </h2>
           <p className="text-xl text-muted-foreground mb-8">
             {language === "ja" ? (
@@ -212,9 +213,7 @@ export default function Game() {
               data-testid="button-save-progress"
             >
               {createLog.isPending
-                ? language === "ja"
-                  ? "保存中..."
-                  : "Saving..."
+                ? t(language, "common", "saving")
                 : language === "ja"
                   ? "進捗を保存"
                   : "Save Progress"}
@@ -224,7 +223,7 @@ export default function Game() {
               className="block w-full py-4 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-colors text-center"
               data-testid="link-play-again"
             >
-              {language === "ja" ? "もう一度遊ぶ" : "Play Again"}
+              {t(language, "game", "retry")}
             </Link>
           </div>
         </motion.div>

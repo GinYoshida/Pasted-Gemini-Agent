@@ -6,6 +6,7 @@ import { Play, BookOpen, LogIn } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/hooks/use-auth";
 import { HelpGuide } from "@/components/HelpGuide";
+import { t } from "@/lib/i18n";
 
 const SPINOSAURUS_IMG = "/assets/generated_images/spinosaurus-painting.png";
 
@@ -120,10 +121,10 @@ export default function Landing() {
             <h1 className="text-4xl md:text-6xl font-display font-bold text-primary text-shadow-lg tracking-wide mb-2">
               {language === "ja" ? "スピノサウルス" : "Spinosaurus"}
               <br/>
-              <span className="text-foreground">{language === "ja" ? "漢字クイズ" : "Kanji Quiz"}</span>
+              <span className="text-foreground">{t(language, "landing", "title")}</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground font-body">
-              {language === "ja" ? "いっしょに学ぼう!" : "Let's learn together!"}
+              {t(language, "landing", "subtitle")}
             </p>
           </div>
         </motion.div>
@@ -196,7 +197,7 @@ export default function Landing() {
                   >
                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-3xl" />
                     <Play className="w-8 h-8 fill-current" />
-                    {language === "ja" ? "クイズをはじめる" : "Start Quiz"}
+                    {t(language, "landing", "start")}
                   </button>
 
                   <div className="relative my-4">
@@ -222,7 +223,7 @@ export default function Landing() {
                     data-testid="button-view-logs"
                   >
                     <BookOpen className="w-5 h-5" />
-                    {language === "ja" ? "保護者画面" : "Parent Screen"}
+                    {t(language, "landing", "parent_button")}
                   </button>
                 </>
               )}

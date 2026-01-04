@@ -9,6 +9,7 @@ import { ArrowLeft, Plus, Trash2, Save, X, Image, Upload } from "lucide-react";
 import type { QuizQuestion, InsertQuizQuestion } from "@shared/schema";
 import imageCompression from "browser-image-compression";
 import { HelpGuide } from "@/components/HelpGuide";
+import { t } from "@/lib/i18n";
 
 import { ALL_KANJI, KANJI_BY_GRADE, GRADE_LABELS } from "@/data/kanji-catalog";
 
@@ -203,7 +204,7 @@ export default function Admin() {
               <ArrowLeft className="w-6 h-6" />
             </Link>
             <h1 className="text-2xl md:text-3xl font-display font-bold text-primary">
-              {language === "ja" ? "クイズ管理" : "Quiz Management"}
+              {t(language, "admin", "title")}
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -443,10 +444,10 @@ export default function Admin() {
         <section className="mb-12 mt-8">
           <div className="flex items-center gap-2 mb-4">
             <h2 className="text-xl font-bold text-slate-700">
-              {language === "ja" ? "おすすめの学習教材" : "Recommended Resources"}
+              {t(language, "admin", "recommended_resources")}
             </h2>
             <span className="text-[10px] uppercase tracking-wider text-slate-400 border border-slate-200 px-1.5 py-0.5 rounded">
-              {language === "ja" ? "PR / 広告" : "Sponsored"}
+              {t(language, "admin", "sponsored")}
             </span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

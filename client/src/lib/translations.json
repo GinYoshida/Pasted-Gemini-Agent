@@ -1,0 +1,90 @@
+{
+  "ja": {
+    "common": {
+      "back": "戻る",
+      "save": "保存",
+      "cancel": "キャンセル",
+      "delete": "削除",
+      "edit": "編集",
+      "add": "追加",
+      "loading": "読み込み中...",
+      "saving": "保存中..."
+    },
+    "landing": {
+      "title": "かんじクイズ",
+      "subtitle": "スピノサウルスといっしょに、かんじをたのしくおぼえよう！",
+      "start": "スタート",
+      "parent_button": "おうちのかたへ",
+      "passcode_prompt": "パスコードをにゅうりょくしてね",
+      "passcode_error": "パスコードがちがうよ"
+    },
+    "admin": {
+      "title": "クイズ管理",
+      "guide_title": "かんり画面のつかいかた",
+      "new_question": "新しい問題",
+      "edit_question": "問題を編集",
+      "correct_kanji": "正解の漢字",
+      "options": "選択肢（3つ選んでください）",
+      "image": "画像",
+      "upload_image": "画像をアップロード",
+      "question_ja": "質問（日本語）",
+      "question_en": "質問（英語）",
+      "enable_question": "この問題を有効にする",
+      "error_select_3": "選択肢は3つ選んでください",
+      "error_include_correct": "正解の漢字を選択肢に含めてください",
+      "recommended_resources": "おすすめの学習教材",
+      "sponsored": "PR / 広告"
+    },
+    "game": {
+      "correct": "せいかい！",
+      "incorrect": "ざんねん！",
+      "complete": "おめでとう！",
+      "score": "スコア",
+      "retry": "もういちど"
+    }
+  },
+  "en": {
+    "common": {
+      "back": "Back",
+      "save": "Save",
+      "cancel": "Cancel",
+      "delete": "Delete",
+      "edit": "Edit",
+      "add": "Add",
+      "loading": "Loading...",
+      "saving": "Saving..."
+    },
+    "landing": {
+      "title": "Kanji Quiz",
+      "subtitle": "Learn Kanji with Spinosaurus!",
+      "start": "Start",
+      "parent_button": "For Parents",
+      "passcode_prompt": "Enter Passcode",
+      "passcode_error": "Incorrect Passcode"
+    },
+    "admin": {
+      "title": "Quiz Management",
+      "guide_title": "Admin Guide",
+      "new_question": "New Question",
+      "edit_question": "Edit Question",
+      "correct_kanji": "Correct Kanji",
+      "options": "Options (select 3)",
+      "image": "Image",
+      "upload_image": "Upload Image",
+      "question_ja": "Question (Japanese)",
+      "question_en": "Question (English)",
+      "enable_question": "Enable this question",
+      "error_select_3": "Please select exactly 3 options",
+      "error_include_correct": "The correct kanji must be included in the options",
+      "recommended_resources": "Recommended Resources",
+      "sponsored": "Sponsored"
+    },
+    "game": {
+      "correct": "Correct!",
+      "incorrect": "Try Again!",
+      "complete": "Well Done!",
+      "score": "Score",
+      "retry": "Retry"
+    }
+  }
+}
